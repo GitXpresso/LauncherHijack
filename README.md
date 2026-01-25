@@ -1,4 +1,7 @@
 ![Logo](AppIcon/TrimmedLogo128.png "Launcher Hijack Logo")
+# DEPRECATED
+This project has been deprecated for a long time now. It's still up as it works for some people however I don't provide support for it. Unfortunately Amazon hard coded the app package name into the FireOS blocked app list stopping installation on many devices. I had no interest in starting an arms race against Amazon and potentially opening myself up to litigation issues hence the deprecation. If you want to install it now you likely need to build it yourself from source with a different package name. I won't provide support for this as it requires setting up Android build tools and a basic understand of manifest files. Also I no longer have a fire tablet so I can't validate any PR's or issues. You're welcome to post issues so others are informed however these will remain as limitations and won't be fixed by me.
+
 # LauncherHijack V4
 A small Android application to circumvent the default Amazon Fire launcher. Works for Fire Tablets and Fire TV's.  
 Huge thanks to ParrotGeek1, Speeddymon and Urbanman2004.
