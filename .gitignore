@@ -5,4 +5,6 @@
 build/
 captures/
 codeStyleConfig.xml
-app/debug
+app/generated
+app/intermediates
+app/tmp
