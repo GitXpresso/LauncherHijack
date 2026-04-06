@@ -1,4 +1,4 @@
-package com.baronkiko.launcherhijack;
+package com.gitxpresso.launcherhijack;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -1,4 +1,4 @@
-package com.baronkiko.launcherhijack;
+package com.gitxpreso.launcherhijack;
 
 import android.app.ActivityManager;
 import android.app.PendingIntent;

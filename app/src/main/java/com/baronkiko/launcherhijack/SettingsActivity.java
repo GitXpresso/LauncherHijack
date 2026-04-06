@@ -1,4 +1,4 @@
-package com.baronkiko.launcherhijack;
+package com.gitxpresso.launcherhijack;
 
 import android.content.Intent;
 import android.graphics.Color;

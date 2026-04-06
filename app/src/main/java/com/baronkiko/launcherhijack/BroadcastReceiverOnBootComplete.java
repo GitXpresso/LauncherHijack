@@ -1,40 +1,37 @@
-package com.baronkiko.launcherhijack;
+package com.gitxpresso.launcherhijack;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.util.Log;
 
-import static android.content.Context.MODE_PRIVATE;
-
 public class BroadcastReceiverOnBootComplete extends BroadcastReceiver {
+    
+    private static final String TAG = "BootReceiver";
 
     @Override
-    public void onReceive(Context context, Intent intent)
-    {
-        switch (intent.getAction())
-        {
-            case Intent.ACTION_PACKAGE_REMOVED:
-                SharedPreferences settings = context.getSharedPreferences("LauncherHijack", MODE_PRIVATE);
-                String s = settings.getString("ChosenLauncher", "");
+    public void onReceive(Context context, Intent intent) {
+        String action = intent.getAction();
+        
+        if (action == null) return;
 
-                if (intent.getData().getSchemeSpecificPart().equals(s))
-                {
-                    SharedPreferences.Editor editor = settings.edit();
-                    editor.putString("ChosenLauncher", "com.baronkiko.launcherhijack");
-                    editor.putString("ChosenLauncherName", "com.baronkiko.launcherhijack.MainActivity");
-                    editor.commit(); // Commit the edits!
-                }
-                break;
+        Log.d(TAG, "Received broadcast: " + action);
 
-            case  Intent.ACTION_BOOT_COMPLETED:
-                MainActivity.SetContext(context);
-                ServiceMan.Start(context);
-                break;
+        // Check for both standard and HTC/Xiaomi quickboot actions
+        if (action.equals(Intent.ACTION_BOOT_COMPLETED) || 
+            action.equals("android.intent.action.QUICKBOOT_POWERON")) {
+            
+            Log.i(TAG, "Boot completed detected. Starting Hijack Service...");
+            
+            // Start the background service management
+            ServiceMan.Start(context);
+        }
+        
+        // If an app was removed, we refresh the state
+        if (action.equals(Intent.ACTION_PACKAGE_REMOVED)) {
+            Log.i(TAG, "Package removed. Refreshing service.");
+            ServiceMan.Stop(context);
+            ServiceMan.Start(context);
         }
     }
-
-
 }
-
