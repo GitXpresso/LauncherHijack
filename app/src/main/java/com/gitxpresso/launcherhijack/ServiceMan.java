@@ -5,12 +5,17 @@ import android.content.Intent;
 import android.os.Build;
 
 public class ServiceMan {
-    public static void Start(Context c) {
-        Intent i = new Intent(c, HomeButtonService.class);
+    public static void Start(Context context) {
+        Intent serviceIntent = new Intent(context, HomeButtonService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            c.startForegroundService(i);
+            context.startForegroundService(serviceIntent);
         } else {
-            c.startService(i);
+            context.startService(serviceIntent);
         }
+    }
+
+    public static void Stop(Context context) {
+        Intent serviceIntent = new Intent(context, HomeButtonService.class);
+        context.stopService(serviceIntent);
     }
 }

@@ -3,43 +3,54 @@ package com.gitxpresso.launcherhijack;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.os.Build;
-import android.widget.Toast;
-
-import com.jaredrummler.android.device.DeviceName;
-
 import static android.content.Context.MODE_PRIVATE;
 import static android.content.Context.UI_MODE_SERVICE;
 
-public class SettingsMan
-{
+public class SettingsMan {
     private static SettingStore settingStore;
+    private static Context appContext;
 
-    protected static class SettingStore
-    {
-        public static final String TAG = "DeviceTypeRuntimeCheck";
-        static boolean HardwareDetection, ApplicationOpenDetection, BroadcastRecieverDetection, OverlayApplicationDetection, MenuButtonOverride, RecentAppOverride, RunningOnTV;
+    public static void init(Context context) {
+        if (context == null) return;
+        appContext = context.getApplicationContext();
+        if (settingStore == null) {
+            settingStore = new SettingStore(appContext);
+        }
+    }
 
-        private static Context c;
-        private static SharedPreferences settings;
+    public static boolean isNativeServiceEnabled() {
+        if (appContext == null) return false;
+        return appContext.getSharedPreferences("LauncherHijack", MODE_PRIVATE)
+                .getBoolean("NativeServiceEnabled", false);
+    }
 
+    public static void setNativeService(boolean enabled) {
+        if (appContext == null) return;
+        appContext.getSharedPreferences("LauncherHijack", MODE_PRIVATE)
+                .edit()
+                .putBoolean("NativeServiceEnabled", enabled)
+                .apply();
+        
+        if (enabled) ServiceMan.Start(appContext);
+        else ServiceMan.Stop(appContext);
+    }
 
-        public SettingStore()
-        {
-            c = MainActivity.GetContext();
+    public static SettingStore GetSettings() {
+        return settingStore;
+    }
+
+    public static class SettingStore {
+        public boolean HardwareDetection, ApplicationOpenDetection, BroadcastRecieverDetection, 
+                       OverlayApplicationDetection, MenuButtonOverride, RecentAppOverride;
+        private SharedPreferences settings;
+
+        public SettingStore(Context c) {
             settings = c.getSharedPreferences("LauncherHijack", MODE_PRIVATE);
-
-            RunningOnTV = c.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
-
-
-            if (!settings.getBoolean("defaultsLoaded", false))
-            {
+            if (!settings.getBoolean("defaultsLoaded", false)) {
                 LoadDefaults();
                 return;
             }
-
             HardwareDetection = settings.getBoolean("HardwareDetection", false);
             ApplicationOpenDetection = settings.getBoolean("ApplicationOpenDetection", false);
             BroadcastRecieverDetection = settings.getBoolean("BroadcastRecieverDetection", false);
@@ -48,43 +59,26 @@ public class SettingsMan
             RecentAppOverride = settings.getBoolean("RecentAppOverride", false);
         }
 
-        public static void LoadDefaults()
-        {
-            UiModeManager uiModeManager = (UiModeManager) c.getSystemService(UI_MODE_SERVICE);
-            boolean tv = uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION;
-            boolean android7 = Build.VERSION.SDK_INT >= 25;
-
-            HardwareDetection = MenuButtonOverride = tv; // Enable hardware detection on TV's
-            OverlayApplicationDetection = !android7; // Disabled for new fire tablets and tv
-            RecentAppOverride = android7 & !tv; // Enable for new fire tablets
+        public void LoadDefaults() {
+            if (appContext == null) return;
+            UiModeManager uiModeManager = (UiModeManager) appContext.getSystemService(UI_MODE_SERVICE);
+            boolean tv = (uiModeManager != null && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION);
+            
+            HardwareDetection = MenuButtonOverride = tv;
             BroadcastRecieverDetection = true;
-            ApplicationOpenDetection = !tv; // Fall back enabled by default for non tv users
-
-            SharedPreferences.Editor editor = settings.edit();
-            editor.putBoolean("defaultsLoaded", true);
-            editor.commit(); // Commit the edits!
             SaveSettings();
         }
 
-        public static void SaveSettings()
-        {
-            SharedPreferences.Editor editor = settings.edit();
-            editor.putBoolean("HardwareDetection", HardwareDetection);
-            editor.putBoolean("ApplicationOpenDetection", ApplicationOpenDetection);
-            editor.putBoolean("BroadcastRecieverDetection", BroadcastRecieverDetection);
-            editor.putBoolean("OverlayApplicationDetection", OverlayApplicationDetection);
-            editor.putBoolean("MenuButtonOverride", MenuButtonOverride);
-            editor.putBoolean("RecentAppOverride", RecentAppOverride);
-            editor.commit(); // Commit the edits!
-
-            Toast.makeText(MainActivity.GetContext(),"Settings Saved", Toast.LENGTH_LONG).show();
+        public void SaveSettings() {
+            settings.edit()
+                .putBoolean("defaultsLoaded", true)
+                .putBoolean("HardwareDetection", HardwareDetection)
+                .putBoolean("ApplicationOpenDetection", ApplicationOpenDetection)
+                .putBoolean("BroadcastRecieverDetection", BroadcastRecieverDetection)
+                .putBoolean("OverlayApplicationDetection", OverlayApplicationDetection)
+                .putBoolean("MenuButtonOverride", MenuButtonOverride)
+                .putBoolean("RecentAppOverride", RecentAppOverride)
+                .apply();
         }
-    }
-
-    public static SettingStore GetSettings()
-    {
-        if (settingStore == null)
-            settingStore = new SettingStore();
-        return settingStore;
     }
 }
