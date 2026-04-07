@@ -1,6 +1,7 @@
 package com.gitxpresso.launcherhijack;
 
 import android.accessibilityservice.AccessibilityService;
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
@@ -18,7 +19,7 @@ public class AccServ extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         if (event == null) return;
-        
+
         CharSequence pkg = event.getPackageName();
         CharSequence cls = event.getClassName();
 
@@ -45,7 +46,7 @@ public class AccServ extends AccessibilityService {
     @Override
     public boolean onKeyEvent(KeyEvent event) {
         if (event == null || settings == null) return false;
-        
+
         if (!settings.HardwareDetection)
             return false;
 
@@ -61,7 +62,6 @@ public class AccServ extends AccessibilityService {
                     return true;
                 }
                 return false;
-
             case KeyEvent.KEYCODE_MENU:
                 if (settings.MenuButtonOverride && action == KeyEvent.ACTION_DOWN) {
                     HomePressCanceled = true;
@@ -74,6 +74,14 @@ public class AccServ extends AccessibilityService {
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
+        
+        // Force a configuration refresh to fix the "delay" issue programmatically
+        AccessibilityServiceInfo info = getServiceInfo();
+        if (info != null) {
+            info.notificationTimeout = 0; // Ensures instant response
+            setServiceInfo(info);
+        }
+
         settings = SettingsMan.GetSettings();
         MainActivity.SetContext(getApplicationContext());
 
@@ -98,7 +106,7 @@ public class AccServ extends AccessibilityService {
             @Override
             public void onRecentAppPressed() {}
         });
-        
+
         try {
             homeWatcher.startWatch();
         } catch (Exception e) {

@@ -25,6 +25,12 @@ public class BroadcastReceiverOnBootComplete extends BroadcastReceiver {
             
             // Start the background service management
             ServiceMan.Start(context);
+
+            // Wake up the Accessibility Service by starting MainActivity invisibly
+            Intent wakeIntent = new Intent(context, MainActivity.class);
+            wakeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            wakeIntent.putExtra("fromBoot", true);
+            context.startActivity(wakeIntent);
         }
         
         // If an app was removed, we refresh the state

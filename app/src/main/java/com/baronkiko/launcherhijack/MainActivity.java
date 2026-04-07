@@ -57,7 +57,6 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu)
     {
         MenuInflater inflater = getMenuInflater();
-
         inflater.inflate(R.menu.mainmenu, menu);
         sysApps = menu.getItem(0);
         launcher = menu.getItem(1);
@@ -116,7 +115,6 @@ public class MainActivity extends AppCompatActivity
 
         SharedPreferences settings = getSharedPreferences("LauncherHijack", MODE_PRIVATE);
         String selectedPackage = settings.getString("ChosenLauncher", "com.teslacoilsw.launcher");
-
         for (int i = 0; i < appInfo.size(); i++) {
             if (appInfo.get(i).activityInfo.packageName.equals(selectedPackage)) {
                 prevSelectedIndex = i;
@@ -135,21 +133,20 @@ public class MainActivity extends AppCompatActivity
         String adbCommand3 = "# adb shell";
         String adbCommand4 = "# pm grant com.baronkiko.launcherhijack android.permission.SYSTEM_ALERT";
         String adbCommand4Part2 = "    _WINDOW";
-
+        
         AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
         alertDialog.setTitle("FireTV Permissions Notice");
 
         LinearLayout alertContents = new LinearLayout(this);
         LinearLayout.LayoutParams lllp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-
         TextView alertHeader = new TextView(this);
         TextView alertMessage = new TextView(this);
         TextView alertMessageExtraLine = new TextView(this);
-
+        
         alertHeader.setText(welcomeMessage + " " + welcomeMessage2 + "\n");
         alertHeader.setGravity(Gravity.CENTER_HORIZONTAL);
         alertHeader.setTextColor(Color.WHITE);
-
+        
         alertMessage.setText(adbCommand1 + "\n" + adbCommand2 + "\n" + adbCommand3 + "\n" + adbCommand4);
         alertMessage.setGravity(Gravity.LEFT);
         alertMessage.setTextColor(Color.WHITE);
@@ -230,6 +227,12 @@ public class MainActivity extends AppCompatActivity
         SetContext(getApplicationContext());
         super.onCreate(savedInstanceState);
 
+        // Auto-close if started from boot receiver to refresh accessibility silently
+        if (getIntent() != null && getIntent().getBooleanExtra("fromBoot", false)) {
+            finish();
+            return;
+        }
+
         if (!isAccessibilityEnabled(context, "com.baronkiko.launcherhijack/.AccServ"))
         {
             AlertDialog.Builder builder = new AlertDialog.Builder(this)
@@ -256,7 +259,7 @@ public class MainActivity extends AppCompatActivity
         }
         else if (getApplicationContext().getSharedPreferences("LauncherHijack", MODE_PRIVATE).getString("ChosenLauncher", "com.baronkiko.launcherhijack").equals("com.baronkiko.launcherhijack"))
             Toast.makeText(getApplicationContext(),"Please select a launcher", Toast.LENGTH_LONG).show();
-
+            
         setContentView(com.baronkiko.launcherhijack.R.layout.activity_main);
 
         mListAppInfo = findViewById(R.id.lvApps);
