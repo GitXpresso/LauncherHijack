@@ -1,6 +1,6 @@
 ![Logo](AppIcon/TrimmedLogo128.png "Launcher Hijack Logo")
 
-# LauncherHijack V5
+# LauncherHijack V4
 ### Original description:
 A small Android application to circumvent the default Amazon Fire launcher. Works for Fire Tablets and Fire TV's.  
 
