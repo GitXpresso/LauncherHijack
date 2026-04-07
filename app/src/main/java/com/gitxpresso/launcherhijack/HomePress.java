@@ -4,44 +4,29 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.util.Log;
-
-import static android.content.Context.MODE_PRIVATE;
 
 public class HomePress {
-    private static long LastActivate = 0;
-
-    public static Intent GetDesiredIntent(Context c) {
-        SharedPreferences settings = c.getSharedPreferences("LauncherHijack", MODE_PRIVATE);
-        String pkg = settings.getString("ChosenLauncher", "com.teslacoilsw.launcher");
-        String cls = settings.getString("ChosenLauncherName", "com.teslacoilsw.launcher.Launcher");
-
-        ComponentName componentName = new ComponentName(pkg, cls);
-        Intent i = new Intent(Intent.ACTION_MAIN);
-
-        i.addCategory(Intent.CATEGORY_LAUNCHER);
-        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK 
-                 | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS 
-                 | Intent.FLAG_ACTIVITY_CLEAR_TOP 
-                 | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        i.setComponent(componentName);
-
-        return i;
-    }
+    private static long lastPress = 0;
 
     public static void Perform(Context c) {
-        long time = System.currentTimeMillis();
-        // Prevent accidental rapid-fire launches
-        if (time - LastActivate < 250) {
-            return;
-        }
-        LastActivate = time;
+        if (System.currentTimeMillis() - lastPress < 200) return;
+        lastPress = System.currentTimeMillis();
 
+        SharedPreferences settings = c.getSharedPreferences("LauncherHijack", Context.MODE_PRIVATE);
+        String pkg = settings.getString("ChosenLauncher", "");
+        String cls = settings.getString("ChosenLauncherName", "");
+
+        if (pkg.isEmpty()) return;
+
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        intent.setComponent(new ComponentName(pkg, cls));
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | 
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP | 
+                        Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        
         try {
-            Intent i = GetDesiredIntent(c);
-            c.startActivity(i);
-        } catch (Exception e) {
-            Log.e("HomePress", "Failed to launch chosen launcher: " + e.getMessage());
-        }
+            c.startActivity(intent);
+        } catch (Exception ignored) {}
     }
 }

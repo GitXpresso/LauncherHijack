@@ -3,41 +3,17 @@ package com.gitxpresso.launcherhijack;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
+import android.os.Build;
 
 public class BroadcastReceiverOnBootComplete extends BroadcastReceiver {
-    
-    private static final String TAG = "BootReceiver";
-
     @Override
     public void onReceive(Context context, Intent intent) {
-        String action = intent.getAction();
-        
-        if (action == null) return;
-
-        Log.d(TAG, "Received broadcast: " + action);
-
-        // Check for both standard and HTC/Xiaomi quickboot actions
-        if (action.equals(Intent.ACTION_BOOT_COMPLETED) || 
-            action.equals("android.intent.action.QUICKBOOT_POWERON")) {
-            
-            Log.i(TAG, "Boot completed detected. Starting Hijack Service...");
-            
-            // Start the background service management
-            ServiceMan.Start(context);
-
-            // Wake up the Accessibility Service by starting MainActivity invisibly
-            Intent wakeIntent = new Intent(context, MainActivity.class);
-            wakeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            wakeIntent.putExtra("fromBoot", true);
-            context.startActivity(wakeIntent);
-        }
-        
-        // If an app was removed, we refresh the state
-        if (action.equals(Intent.ACTION_PACKAGE_REMOVED)) {
-            Log.i(TAG, "Package removed. Refreshing service.");
-            ServiceMan.Stop(context);
-            ServiceMan.Start(context);
+        HomePress.Perform(context);
+        Intent serviceIntent = new Intent(context, HomeButtonService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(serviceIntent);
+        } else {
+            context.startService(serviceIntent);
         }
     }
 }
