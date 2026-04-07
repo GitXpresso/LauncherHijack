@@ -1,7 +1,11 @@
 ![Logo](AppIcon/TrimmedLogo128.png "Launcher Hijack Logo")
 
-# LauncherHijack V4
+# LauncherHijack V5
 A small Android application to circumvent the default Amazon Fire launcher. Works for Fire Tablets and Fire TV's.  
+
+## Features:
+* Device Admin Settings redirect on App first launch (opening the installed app for the first time)
+
 Huge thanks to ParrotGeek1, Speeddymon and Urbanman2004.
  - ParrotGeek1 made V1 and without him I would have never started this project.
  - Speeddymon donated a 2018 Fire TV allowing me to implement Fire TV support. If you have a Fire TV you should thank him
