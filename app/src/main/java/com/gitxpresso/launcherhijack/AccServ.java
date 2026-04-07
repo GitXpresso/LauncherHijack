@@ -1,72 +1,45 @@
 package com.gitxpresso.launcherhijack;
 
 import android.accessibilityservice.AccessibilityService;
-import android.accessibilityservice.AccessibilityServiceInfo;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
-import com.jaredrummler.android.device.DeviceName;
+import android.util.Log;
 
 public class AccServ extends AccessibilityService {
-
-    static final String TAG = "AccServ";
-    static boolean HomePressCanceled = false;
-    static HomeWatcher homeWatcher;
-    static String lastApp = ""; 
-    static String lastClass = "";
     private SettingsMan.SettingStore settings;
+    private static final String TAG = "AccServ";
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         if (event == null) return;
 
-        CharSequence pkg = event.getPackageName();
-        CharSequence cls = event.getClassName();
-
-        lastApp = (pkg != null) ? pkg.toString() : "";
-        lastClass = (cls != null) ? cls.toString() : "";
-
         if (settings == null) {
             settings = SettingsMan.GetSettings();
         }
 
-        if (!settings.ApplicationOpenDetection)
-            return;
-
-        if ("com.amazon.firelauncher".equals(lastApp)) {
-            HomePress.Perform(getApplicationContext());
+        if (settings != null && settings.ApplicationOpenDetection) {
+            CharSequence pkg = event.getPackageName();
+            // Detect when the system launcher is about to appear
+            if (pkg != null && pkg.toString().equals("com.amazon.firelauncher")) {
+                Log.d(TAG, "System launcher detected via Accessibility. Hijacking...");
+                HomePress.Perform(getApplicationContext());
+            }
         }
     }
 
     @Override
-    public void onInterrupt() {
-        Log.v(TAG, "onInterrupt");
-    }
-
-    @Override
     public boolean onKeyEvent(KeyEvent event) {
-        if (event == null || settings == null) return false;
+        if (settings == null) {
+            settings = SettingsMan.GetSettings();
+        }
 
-        if (!settings.HardwareDetection)
-            return false;
-
-        int keyCode = event.getKeyCode();
-        int action = event.getAction();
-
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_HOME:
-                if (action == KeyEvent.ACTION_UP) {
-                    HomePressCanceled = false;
-                } else if (action == KeyEvent.ACTION_DOWN && !HomePressCanceled) {
+        if (settings != null && settings.HardwareDetection) {
+            if (event.getKeyCode() == KeyEvent.KEYCODE_HOME) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
                     HomePress.Perform(getApplicationContext());
                     return true;
                 }
-                return false;
-            case KeyEvent.KEYCODE_MENU:
-                if (settings.MenuButtonOverride && action == KeyEvent.ACTION_DOWN) {
-                    HomePressCanceled = true;
-                }
-                return false;
+            }
         }
         return false;
     }
@@ -74,54 +47,15 @@ public class AccServ extends AccessibilityService {
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
-        
-        // Force a configuration refresh to fix the "delay" issue programmatically
-        AccessibilityServiceInfo info = getServiceInfo();
-        if (info != null) {
-            info.notificationTimeout = 0; // Ensures instant response
-            setServiceInfo(info);
-        }
-
+        Log.i(TAG, "Accessibility Service Connected");
         settings = SettingsMan.GetSettings();
-        MainActivity.SetContext(getApplicationContext());
-
-        lastClass = "";
-        lastApp = "";
-
-        homeWatcher = new HomeWatcher(getApplicationContext());
-        homeWatcher.setOnHomePressedListener(new OnHomePressedListener() {
-            @Override
-            public void onHomePressed() {
-                if (settings != null && settings.BroadcastRecieverDetection && !HomePressCanceled) {
-                    boolean isRecents = (lastApp.equals("com.android.systemui") && 
-                                       lastClass.contains("RecentsActivity"));
-                                       
-                    if (!settings.RecentAppOverride || !isRecents) {
-                        Log.d("New Home", "Home Press Detected. LastApp: " + lastApp);
-                        HomePress.Perform(getApplicationContext());
-                    }
-                }
-            }
-
-            @Override
-            public void onRecentAppPressed() {}
-        });
-
-        try {
-            homeWatcher.startWatch();
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to start HomeWatcher: " + e.getMessage());
-        }
-
-        Log.v(TAG, "Launcher Hijack Service Started on " + DeviceName.getDeviceName());
+        
+        // Initial hijack on service connection
         HomePress.Perform(getApplicationContext());
     }
 
     @Override
-    public void onDestroy() {
-        if (homeWatcher != null) {
-            homeWatcher.stopWatch();
-        }
-        super.onDestroy();
+    public void onInterrupt() {
+        Log.i(TAG, "Accessibility Service Interrupted");
     }
 }

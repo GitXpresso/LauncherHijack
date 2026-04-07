@@ -49,7 +49,7 @@ public class AppInfoAdapter extends BaseAdapter {
 		// inflate new layout if null
 		if(v == null) {
 			LayoutInflater inflater = LayoutInflater.from(mContext);
-			v = inflater.inflate(com.baronkiko.launcherhijack.R.layout.layout_appinfo, null);
+			v = inflater.inflate(com.gitxpresso.launcherhijack.R.layout.layout_appinfo, null);
 		}
 		
 		// load controls from layout resources

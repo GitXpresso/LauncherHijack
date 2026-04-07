@@ -1,4 +1,4 @@
-package com.gitxpresso.launcherhijack; // Corrected package
+package com.gitxpresso.launcherhijack;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.annotation.TargetApi;
@@ -28,6 +28,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+// NEW IMPORTS FOR BATTERY OPTIMIZATION
 import android.os.PowerManager;
 
 import java.util.List;
@@ -35,16 +36,26 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity
 {
     private static Context context;
+
     private ListView mListAppInfo;
     private MenuItem launcher, sysApps;
     private int prevSelectedIndex = 0;
+
     public final static int REQUEST_CODE = 5466;
 
-    public static void SetContext(Context c) { if (context == null) context = c; }
-    public static Context GetContext() { return context; }
+    public static void SetContext(Context c)
+    {
+        if (context == null)
+            context = c;
+    }
+    public static Context GetContext()
+    {
+        return context;
+    }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.mainmenu, menu);
         sysApps = menu.getItem(0);
@@ -52,6 +63,7 @@ public class MainActivity extends AppCompatActivity
         launcher.setChecked(true);
         sysApps.setChecked(true);
         UpdateList();
+
         return true;
     }
 
@@ -60,7 +72,8 @@ public class MainActivity extends AppCompatActivity
         switch (item.getItemId()) {
             case R.id.launcher:
                 launcher.setChecked(!launcher.isChecked());
-                if (launcher.isChecked()) sysApps.setChecked(true);
+                if (launcher.isChecked())
+                    sysApps.setChecked(true);
                 UpdateList();
                 break;
             case R.id.sysApps:
@@ -71,10 +84,12 @@ public class MainActivity extends AppCompatActivity
                 OpenHelp();
                 break;
             case R.id.donate:
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/BaronKiko/LauncherHijack/blob/master/README.md#donations")));
+                Intent donateIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/BaronKiko/LauncherHijack/blob/master/README.md#donations"));
+                startActivity(donateIntent);
                 break;
-            case R.id.settings:
-                startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
+            case  R.id.settings:
+                Intent myIntent = new Intent(getApplicationContext(), SettingsActivity.class);
+                startActivity(myIntent);
                 break;
             default:
                 return super.onOptionsItemSelected(item);
@@ -82,14 +97,18 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private void OpenHelp() {
-        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/BaronKiko/LauncherHijack/blob/master/HELP.md")));
+    private void OpenHelp()
+    {
+        Intent helpIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/BaronKiko/LauncherHijack/blob/master/HELP.md"));
+        startActivity(helpIntent);
     }
 
-    private void UpdateList() {
+    private void UpdateList()
+    {
         boolean sys = sysApps.isChecked();
         boolean l = launcher.isChecked();
         List<ResolveInfo> appInfo = Utilities.getInstalledApplication(this, l, sys);
+
         mListAppInfo = findViewById(R.id.lvApps);
         AppAdapter adapter = new AppAdapter(this, appInfo, getApplicationContext().getPackageManager());
         mListAppInfo.setAdapter(adapter);
@@ -106,79 +125,187 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private void showSecurityAlert() {
+        String welcomeMessage = "The FireTV devices running Nougat or higher do not provide a UI to the Application Permissions.";
+        String welcomeMessage2 = "In order to use this tool on your device, you must first run the below commands from your PC:";
+        String adbCommand1 = "# adb tcpip 5555";
+        String adbCommand2 = "# adb connect (yourfiretvip)";
+        String adbCommand3 = "# adb shell";
+        String adbCommand4 = "# pm grant com.baronkiko.launcherhijack android.permission.SYSTEM_ALERT";
+        String adbCommand4Part2 = "    _WINDOW";
+        
+        AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+        alertDialog.setTitle("FireTV Permissions Notice");
+
+        LinearLayout alertContents = new LinearLayout(this);
+        LinearLayout.LayoutParams lllp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        TextView alertHeader = new TextView(this);
+        TextView alertMessage = new TextView(this);
+        TextView alertMessageExtraLine = new TextView(this);
+        
+        alertHeader.setText(welcomeMessage + " " + welcomeMessage2 + "\n");
+        alertHeader.setGravity(Gravity.CENTER_HORIZONTAL);
+        alertHeader.setTextColor(Color.WHITE);
+        
+        alertMessage.setText(adbCommand1 + "\n" + adbCommand2 + "\n" + adbCommand3 + "\n" + adbCommand4);
+        alertMessage.setGravity(Gravity.LEFT);
+        alertMessage.setTextColor(Color.WHITE);
+
+        alertMessageExtraLine.setText(adbCommand4Part2);
+        alertMessageExtraLine.setGravity(Gravity.LEFT);
+        alertMessageExtraLine.setTextColor(Color.WHITE);
+
+        alertContents.setLayoutParams(lllp);
+        alertContents.setOrientation(LinearLayout.VERTICAL);
+        alertContents.removeAllViews();
+        alertContents.addView(alertHeader);
+        alertContents.addView(alertMessage);
+        alertContents.addView(alertMessageExtraLine);
+
+        alertDialog.setView(alertContents);
+        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        alertDialog.show();
+    }
+
     public boolean checkDrawOverlayPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.canDrawOverlays(this)) {
                 Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
-                try { startActivityForResult(intent, REQUEST_CODE); }
-                catch(Exception e) { Toast.makeText(this, "Manual permission required", Toast.LENGTH_SHORT).show(); }
+                try {
+                    startActivityForResult(intent, REQUEST_CODE);
+                }
+                catch(SecurityException | ActivityNotFoundException e) {
+                    showSecurityAlert();
+                }
                 return false;
             }
+            else {
+                return true;
+            }
         }
-        return true;
+        else {
+            return true;
+        }
     }
 
     public static boolean isAccessibilityEnabled(Context context, String id) {
         AccessibilityManager am = (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
         List<AccessibilityServiceInfo> runningServices = am.getEnabledAccessibilityServiceList(AccessibilityEvent.TYPES_ALL_MASK);
         for (AccessibilityServiceInfo service : runningServices) {
-            if (id.equals(service.getId())) return true;
+            if (id.equals(service.getId())) {
+                return true;
+            }
         }
         return false;
     }
 
+    // NEW METHOD TO TRIGGER THE POPUP
     private void checkBatteryOptimizations() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
             if (pm != null && !pm.isIgnoringBatteryOptimizations(getPackageName())) {
-                Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                Intent intent = new Intent();
+                intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
                 intent.setData(Uri.parse("package:" + getPackageName()));
-                try { startActivity(intent); } catch (Exception e) { Log.e("Main", e.getMessage()); }
+                try {
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Log.e("MainActivity", "Could not open battery settings: " + e.getMessage());
+                }
             }
         }
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         SetContext(getApplicationContext());
         super.onCreate(savedInstanceState);
 
+        // Auto-close if started from boot receiver to refresh accessibility silently
         if (getIntent() != null && getIntent().getBooleanExtra("fromBoot", false)) {
             finish();
             return;
         }
 
-        setContentView(R.layout.activity_main); // Fixed R reference
-
-        if (!isAccessibilityEnabled(context, getPackageName() + "/.AccServ")) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Service Disabled")
-                    .setMessage("Please enable Accessibility Service for Hijack to work.")
-                    .setPositiveButton("Settings", (dialog, which) -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)))
-                    .show();
+        if (!isAccessibilityEnabled(context, "com.baronkiko.launcherhijack/.AccServ"))
+        {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                    .setTitle("Accessibility Service Disabled")
+                    .setMessage("Accessible Service is disabled. You must enable it to ensure Launcher Hijack's functionality")
+                    .setCancelable(true)
+                    .setNegativeButton("Close", new DialogInterface.OnClickListener() { public void onClick(DialogInterface dialog, int which) {} })
+                    .setPositiveButton("Help", new DialogInterface.OnClickListener() { public void onClick(DialogInterface dialog, int which) { OpenHelp(); } });
+            
+            if (!SettingsMan.GetSettings().RunningOnTV)
+            {
+                builder.setNeutralButton("Open Settings", new DialogInterface.OnClickListener()
+                {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id)
+                    {
+                        Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                        startActivity(intent);
+                    }
+                });
+            }
+            AlertDialog alert = builder.create();
+            alert.show();
         }
+        else if (getApplicationContext().getSharedPreferences("LauncherHijack", MODE_PRIVATE).getString("ChosenLauncher", "com.baronkiko.launcherhijack").equals("com.baronkiko.launcherhijack"))
+            Toast.makeText(getApplicationContext(),"Please select a launcher", Toast.LENGTH_LONG).show();
+            
+        setContentView(com.gitxpresso.launcherhijack.R.layout.activity_main);
 
         mListAppInfo = findViewById(R.id.lvApps);
-        mListAppInfo.setOnItemClickListener((parent, view, pos, id) -> {
-            ResolveInfo appInfo = (ResolveInfo) parent.getAdapter().getItem(pos);
-            new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("Set Launcher")
-                    .setMessage("Use " + appInfo.loadLabel(getPackageManager()) + "?")
-                    .setPositiveButton("OK", (dialog, which) -> {
-                        prevSelectedIndex = pos;
-                        getSharedPreferences("LauncherHijack", MODE_PRIVATE).edit()
-                            .putString("ChosenLauncher", appInfo.activityInfo.applicationInfo.packageName)
-                            .apply();
-                    }).show();
+        mListAppInfo.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, final int pos, long id) {
+                AppAdapter appInfoAdapter = (AppAdapter) parent.getAdapter();
+                final ResolveInfo appInfo = (ResolveInfo) appInfoAdapter.getItem(pos);
+
+                AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+                alertDialog.setTitle("Set Launcher");
+                alertDialog.setMessage("Set your launcher to " + appInfo.loadLabel(getPackageManager()) + " (" + appInfo.activityInfo.packageName + ")");
+                alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                prevSelectedIndex = pos;
+                                SharedPreferences settings = getSharedPreferences("LauncherHijack", MODE_PRIVATE);
+                                SharedPreferences.Editor editor = settings.edit();
+                                editor.putString("ChosenLauncher", appInfo.activityInfo.applicationInfo.packageName);
+                                editor.putString("ChosenLauncherName", appInfo.activityInfo.name);
+                                editor.commit();
+                            }
+                        });
+                alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                mListAppInfo.setSelection(prevSelectedIndex);
+                                mListAppInfo.setItemChecked(prevSelectedIndex, true);
+                                dialog.dismiss();
+                            }
+                        });
+                alertDialog.show();
+            }
         });
 
+        // Trigger Battery Check at the end of setup
         checkBatteryOptimizations();
     }
 
     @Override
+    @TargetApi(Build.VERSION_CODES.M)
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_CODE && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (Settings.canDrawOverlays(this)) ServiceMan.Start(this);
+        if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
+            if (Settings.canDrawOverlays(this)) {
+                ServiceMan.Start(this);
+            }
         }
     }
 }
