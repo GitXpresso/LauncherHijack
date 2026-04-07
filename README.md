@@ -14,7 +14,8 @@ Huge thanks to ParrotGeek1, Speeddymon and Urbanman2004.
  - Speeddymon donated a 2018 Fire TV allowing me to implement Fire TV support. If you have a Fire TV you should thank him
  - Urbanman2004 created the lovely logo/app icon. Be sure to thank him too.
  
-I don't really check XDA but you can talk to other users there at the official threads:
+ 
+## Amazon Fire - Fire tv XDA forums:
  - [Fire Tablets](https://forum.xda-developers.com/amazon-fire/general/launcher-root-launcher-hijack-v2-t3561026)
  - [Fire TV's](https://forum.xda-developers.com/fire-tv/general/launcher-root-launcher-hijack-v4-t3877467)
 

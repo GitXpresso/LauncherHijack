@@ -1,153 +1,97 @@
 package com.gitxpresso.launcherhijack;
 
-import android.content.Intent;
 import android.graphics.Color;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.Toast;
 
-public class SettingsActivity extends AppCompatActivity
-{
-    private CheckBox hwButtonDetection, launncherOpen, broadcastReciever, overlayDetection, disableWhileMenuHeld, disableInTaskSwitcher;
+public class SettingsActivity extends AppCompatActivity {
+    private CheckBox hwButtonDetection, launcherOpen, broadcastReceiver, overlayDetection, 
+                     disableWhileMenuHeld, disableInTaskSwitcher, nativeServiceToggle;
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu)
-    {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.settingsmenu, menu);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_settings);
+        setTitle(R.string.settings);
+        
+        SettingsMan.init(this);
+        SettingsMan.SettingStore settings = SettingsMan.GetSettings();
+
+        // Bind Checkboxes to the UI
+        hwButtonDetection = findViewById(R.id.hardwareCB);
+        launcherOpen = findViewById(R.id.openApplicationCB);
+        broadcastReceiver = findViewById(R.id.broadcastCB);
+        overlayDetection = findViewById(R.id.overlayCB);
+        disableWhileMenuHeld = findViewById(R.id.menuButtonOverrideCB);
+        disableInTaskSwitcher = findViewById(R.id.taskSwitchCB);
+        nativeServiceToggle = findViewById(R.id.nativeServiceCB);
+
+        // Load existing state
+        hwButtonDetection.setChecked(settings.HardwareDetection);
+        launcherOpen.setChecked(settings.ApplicationOpenDetection);
+        broadcastReceiver.setChecked(settings.BroadcastRecieverDetection);
+        overlayDetection.setChecked(settings.OverlayApplicationDetection);
+        disableWhileMenuHeld.setChecked(settings.MenuButtonOverride);
+        disableInTaskSwitcher.setChecked(settings.RecentAppOverride);
+        nativeServiceToggle.setChecked(SettingsMan.isNativeServiceEnabled());
+
+        // Attach click listeners to rows for better TV remote navigation
+        AddRowListeners(findViewById(R.id.hardwareCBView), hwButtonDetection);
+        AddRowListeners(findViewById(R.id.openApplicationCBView), launcherOpen);
+        AddRowListeners(findViewById(R.id.broadcastCBView), broadcastReceiver);
+        AddRowListeners(findViewById(R.id.overlayCBView), overlayDetection);
+        AddRowListeners(findViewById(R.id.menuButtonOverrideCBView), disableWhileMenuHeld);
+        AddRowListeners(findViewById(R.id.taskSwitchCBView), disableInTaskSwitcher);
+        AddRowListeners(findViewById(R.id.nativeServiceCBView), nativeServiceToggle);
+
+        findViewById(R.id.saveButton).setOnClickListener(v -> {
+            settings.HardwareDetection = hwButtonDetection.isChecked();
+            settings.ApplicationOpenDetection = launcherOpen.isChecked();
+            settings.BroadcastRecieverDetection = broadcastReceiver.isChecked();
+            settings.OverlayApplicationDetection = overlayDetection.isChecked();
+            settings.MenuButtonOverride = disableWhileMenuHeld.isChecked();
+            settings.RecentAppOverride = disableInTaskSwitcher.isChecked();
+            
+            SettingsMan.setNativeService(nativeServiceToggle.isChecked());
+            settings.SaveSettings();
+            
+            Toast.makeText(this, "Settings Applied", Toast.LENGTH_SHORT).show();
+            finish();
+        });
+
+        findViewById(R.id.cancelButton).setOnClickListener(v -> finish());
+    }
+
+    private void AddRowListeners(final View view, final CheckBox checkBox) {
+        view.setOnClickListener(v -> checkBox.toggle());
+        view.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN)
+                v.setBackgroundColor(Color.parseColor("#33AAAAAA")); // Subtle highlight
+            else if (event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL)
+                v.setBackgroundColor(Color.TRANSPARENT);
+            return false;
+        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.settingsmenu, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle item selection
-        switch (item.getItemId()) {
-            case R.id.loadDefaults:
-                SettingsMan.SettingStore settings = SettingsMan.GetSettings();
-                settings.LoadDefaults();
-
-                hwButtonDetection.setChecked(settings.HardwareDetection);
-                launncherOpen.setChecked(settings.ApplicationOpenDetection);
-                broadcastReciever.setChecked(settings.BroadcastRecieverDetection);
-                overlayDetection.setChecked(settings.OverlayApplicationDetection);
-                disableWhileMenuHeld.setChecked(settings.MenuButtonOverride);
-                disableInTaskSwitcher.setChecked(settings.RecentAppOverride);
-
-                settings.SaveSettings();
-
-                return true;
-
-            default:
-                return super.onOptionsItemSelected(item);
+        if (item.getItemId() == R.id.loadDefaults) {
+            SettingsMan.GetSettings().LoadDefaults();
+            recreate(); // Restart activity to show defaults
+            return true;
         }
-    }
-
-    private void AddListeners(final View v, final CheckBox c)
-    {
-        v.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                c.toggle();
-            }
-        });
-
-        v.setOnTouchListener(new View.OnTouchListener()
-        {
-            @Override
-            public boolean onTouch(View v, MotionEvent event)
-            {
-                if (event.getAction() == MotionEvent.ACTION_DOWN)
-                    v.setBackgroundColor(getResources().getColor(R.color.colorAccent));
-                else if (event.getAction() == MotionEvent.ACTION_UP)
-                    v.setBackgroundColor(Color.TRANSPARENT);
-                return false;
-            }
-        });
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_settings);
-        setTitle("Settings");
-
-        SettingsMan.SettingStore settings = SettingsMan.GetSettings();
-
-        // Hardware button detection
-        View cbv = findViewById(R.id.hardwareCBView);
-        hwButtonDetection = (CheckBox)findViewById(R.id.hardwareCB);
-        hwButtonDetection.setChecked(settings.HardwareDetection);
-        AddListeners(cbv, hwButtonDetection);
-
-
-        // Launcher open detection
-        cbv = findViewById(R.id.openApplicationCBView);
-        launncherOpen = (CheckBox)findViewById(R.id.openApplicationCB);
-        launncherOpen.setChecked(settings.ApplicationOpenDetection);
-        AddListeners(cbv, launncherOpen);
-
-        // Broadcast reciever detection
-        cbv = findViewById(R.id.broadcastCBView);
-        broadcastReciever = (CheckBox)findViewById(R.id.broadcastCB);
-        broadcastReciever.setChecked(settings.BroadcastRecieverDetection);
-        AddListeners(cbv, broadcastReciever);
-
-        // Overlay detection
-        cbv = findViewById(R.id.overlayCBView);
-        overlayDetection = (CheckBox)findViewById(R.id.overlayCB);
-        overlayDetection.setChecked(settings.OverlayApplicationDetection);
-        AddListeners(cbv, overlayDetection);
-
-        // Disable while menu held
-        cbv = findViewById(R.id.menuButtonOverrideCBView);
-        disableWhileMenuHeld = (CheckBox)findViewById(R.id.menuButtonOverrideCB);
-        disableWhileMenuHeld.setChecked(settings.MenuButtonOverride);
-        AddListeners(cbv, disableWhileMenuHeld);
-
-        // Enable in task switcher
-        cbv = findViewById(R.id.taskSwitchCBView);
-        disableInTaskSwitcher = (CheckBox)findViewById(R.id.taskSwitchCB);
-        disableInTaskSwitcher.setChecked(settings.RecentAppOverride);
-        AddListeners(cbv, disableInTaskSwitcher);
-
-
-
-        // Save Button
-        findViewById(R.id.saveButton).setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                SettingsMan.SettingStore settings = SettingsMan.GetSettings();
-
-                settings.HardwareDetection = hwButtonDetection.isChecked();
-                settings.ApplicationOpenDetection = launncherOpen.isChecked();
-                settings.BroadcastRecieverDetection = broadcastReciever.isChecked();
-                settings.OverlayApplicationDetection = overlayDetection.isChecked();
-                settings.MenuButtonOverride = disableWhileMenuHeld.isChecked();
-                settings.RecentAppOverride = disableInTaskSwitcher.isChecked();
-
-                settings.SaveSettings();
-                onBackPressed();
-            }
-        });
-
-        // Cancel Button
-        findViewById(R.id.cancelButton).setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                onBackPressed();
-            }
-        });
+        return super.onOptionsItemSelected(item);
     }
 }
